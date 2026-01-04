@@ -1,7 +1,12 @@
 # app.py
 import streamlit as st
 import pickle
+import joblib
 import numpy as np
+
+# Page config must be first
+st.set_page_config(page_title="Iris Prediction", layout="centered")
+
 
 class IrisPredictionApp:
     def __init__(self, model_path: str):
@@ -13,60 +18,44 @@ class IrisPredictionApp:
         }
 
     def load_model(self, path):
-        with open(path, "rb") as f:
-            return pickle.load(f)
+        try:
+            with open(path, "rb") as f:
+                return pickle.load(f)
+        except Exception:
+            return joblib.load(path)
 
     def render_header(self):
-        st.set_page_config(page_title="Iris Prediction", layout="centered")
         st.title("🌸 Iris Flower Prediction")
-        st.markdown("Predict Iris species using trained ML model.")
 
     def render_inputs(self):
-        with st.container():
-            st.subheader("Input Features")
-            col1, col2 = st.columns(2)
+        st.subheader("Input Features")
 
-            with col1:
-                self.sepal_length = st.number_input(
-                    "Sepal Length (cm)", min_value=0.0, format="%.2f"
-                )
-                self.sepal_width = st.number_input(
-                    "Sepal Width (cm)", min_value=0.0, format="%.2f"
-                )
+        col1, col2 = st.columns(2)
 
-            with col2:
-                self.petal_length = st.number_input(
-                    "Petal Length (cm)", min_value=0.0, format="%.2f"
-                )
-                self.petal_width = st.number_input(
-                    "Petal Width (cm)", min_value=0.0, format="%.2f"
-                )
+        with col1:
+            self.sepal_length = st.number_input("Sepal Length (cm)", value=5.1)
+            self.sepal_width = st.number_input("Sepal Width (cm)", value=3.5)
 
-    def predict(self):
-        input_data = np.array([[
-            self.sepal_length,
-            self.sepal_width,
-            self.petal_length,
-            self.petal_width
-        ]])
-        prediction = self.model.predict(input_data)[0]
-        return prediction
+        with col2:
+            self.petal_length = st.number_input("Petal Length (cm)", value=1.4)
+            self.petal_width = st.number_input("Petal Width (cm)", value=0.2)
 
     def render_prediction(self):
         if st.button("Predict"):
-            pred = self.predict()
-            class_name = self.classes.get(pred, str(pred))
-            st.success(f"Predicted Class: {class_name}")
+            input_data = np.array([[
+                self.sepal_length,
+                self.sepal_width,
+                self.petal_length,
+                self.petal_width
+            ]])
 
-    def render_footer(self):
-        st.markdown("---")
-        st.caption("Streamlit ML App")
+            prediction = self.model.predict(input_data)[0]
+            st.success(f"Predicted Class: {self.classes.get(prediction, prediction)}")
 
     def run(self):
         self.render_header()
         self.render_inputs()
         self.render_prediction()
-        self.render_footer()
 
 
 if __name__ == "__main__":
